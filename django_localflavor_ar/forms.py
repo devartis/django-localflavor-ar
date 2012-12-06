@@ -8,8 +8,10 @@ from __future__ import absolute_import, unicode_literals
 from django_localflavor_ar.ar_provinces import PROVINCE_CHOICES
 from django.core.validators import EMPTY_VALUES
 from django.forms import ValidationError
-from django.forms.fields import RegexField, CharField, Select
+from django.forms.fields import RegexField, CharField, Select, Field
+from django.utils.encoding import smart_text
 from django.utils.translation import ugettext_lazy as _
+import re
 
 
 class ARProvinceSelect(Select):
@@ -126,3 +128,23 @@ class ARCUITField(RegexField):
             check_digit = cuit[-1]
             cuit = cuit[:-1]
         return '%s-%s-%s' % (cuit[:2], cuit[2:], check_digit)
+
+class ARPhoneNumberField(Field):
+    """
+    This field validates a phone number. Phone number format is XXxx-XXxx-XXXX.
+    Lowercase digits are optional.
+    """
+    phone_digits_re = re.compile(r'^(\d{2,4})[-](\d{2,4})[-](\d{4})$')
+    default_error_messages = {
+        'invalid': _('Invalid format. Phone format must be XXxx-XXxx-XXXX (lowercase digits are optional numbers).'),
+        }
+
+    def clean(self, value):
+        super(ARPhoneNumberField, self).clean(value)
+        if value in EMPTY_VALUES:
+            return ''
+        value = re.sub('(\(|\)|\s+)', '', smart_text(value))
+        m = self.phone_digits_re.search(value)
+        if m:
+            return '%s-%s-%s' % (m.group(1), m.group(2), m.group(3))
+        raise ValidationError(self.error_messages['invalid'])

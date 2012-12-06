@@ -4,6 +4,7 @@ from django_localflavor_ar.forms import (ARProvinceSelect,
     ARPostalCodeField, ARDNIField, ARCUITField)
 
 from django.test import SimpleTestCase
+from django_localflavor_ar.forms import ARPhoneNumberField
 
 
 class ARLocalFlavorTests(SimpleTestCase):
@@ -101,3 +102,29 @@ class ARLocalFlavorTests(SimpleTestCase):
             '11211111110': error_legal_type,
         }
         self.assertFieldOutput(ARCUITField, valid, invalid)
+
+    def test_ARPhoneNumberField(self):
+        error_invalid = ['Invalid format. Phone format must be XXxx-XXxx-XXXX (lowercase digits are optional numbers).']
+
+        valid = {
+            '011-4899-5666': '011-4899-5666',
+            '11-6898-1111': '11-6898-1111',
+            '22-55-6546': '22-55-6546',
+            '2266-55-6546': '2266-55-6546',
+            '2266-5566-6546': '2266-5566-6546',
+            '111-656-6489': '111-656-6489',
+        }
+
+        invalid = {
+            '2-1012-3456': error_invalid,
+            '21-0146-119': error_invalid,
+            '11-01234567': error_invalid,
+            '92-4444-': error_invalid,
+            '99984-10-65': error_invalid,
+            '-1034-5551': error_invalid,
+            '27-1-1555': error_invalid,
+            '255-499-99999': error_invalid,
+        }
+
+        self.assertFieldOutput(ARPhoneNumberField, valid, invalid)
+
